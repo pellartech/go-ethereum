@@ -216,6 +216,37 @@ var (
 		TerminalTotalDifficultyPassed: false,
 		Ethash:                        nil,
 		Clique:                        &CliqueConfig{Period: 0, Epoch: 30000},
+		CliqueFaster:                  nil,
+		ArbitrumChainParams:           DisableArbitrumParams(),
+	}
+
+	AllCliqueFasterProtocolChanges = &ChainConfig{
+		ChainID:                       big.NewInt(1338),
+		HomesteadBlock:                big.NewInt(0),
+		DAOForkBlock:                  nil,
+		DAOForkSupport:                false,
+		EIP150Block:                   big.NewInt(0),
+		EIP155Block:                   big.NewInt(0),
+		EIP158Block:                   big.NewInt(0),
+		ByzantiumBlock:                big.NewInt(0),
+		ConstantinopleBlock:           big.NewInt(0),
+		PetersburgBlock:               big.NewInt(0),
+		IstanbulBlock:                 big.NewInt(0),
+		MuirGlacierBlock:              big.NewInt(0),
+		BerlinBlock:                   big.NewInt(0),
+		LondonBlock:                   big.NewInt(0),
+		ArrowGlacierBlock:             nil,
+		GrayGlacierBlock:              nil,
+		MergeNetsplitBlock:            nil,
+		ShanghaiTime:                  nil,
+		CancunTime:                    nil,
+		PragueTime:                    nil,
+		VerkleTime:                    nil,
+		TerminalTotalDifficulty:       nil,
+		TerminalTotalDifficultyPassed: false,
+		Ethash:                        nil,
+		Clique:                        nil,
+		CliqueFaster:                  &CliqueFasterConfig{PeriodMS: 500, Epoch: 30000},
 		ArbitrumChainParams:           DisableArbitrumParams(),
 	}
 
@@ -367,8 +398,9 @@ type ChainConfig struct {
 	TerminalTotalDifficultyPassed bool `json:"terminalTotalDifficultyPassed,omitempty"`
 
 	// Various consensus engines
-	Ethash *EthashConfig `json:"ethash,omitempty"`
-	Clique *CliqueConfig `json:"clique,omitempty"`
+	Ethash       *EthashConfig       `json:"ethash,omitempty"`
+	Clique       *CliqueConfig       `json:"clique,omitempty"`
+	CliqueFaster *CliqueFasterConfig `json:"cliqueFaster,omitempty"`
 
 	ArbitrumChainParams ArbitrumChainParams `json:"arbitrum,omitempty"`
 }
@@ -390,6 +422,16 @@ type CliqueConfig struct {
 // String implements the stringer interface, returning the consensus engine details.
 func (c *CliqueConfig) String() string {
 	return "clique"
+}
+
+type CliqueFasterConfig struct {
+	PeriodMS uint64 `json:"periodMS"` // Number of milliseconds between blocks to enforce
+	Epoch    uint64 `json:"epoch"`    // Epoch length to reset votes and checkpoint
+}
+
+// String implements the stringer interface, returning the consensus engine details.
+func (c *CliqueFasterConfig) String() string {
+	return "cliqueFaster"
 }
 
 // Description returns a human-readable description of ChainConfig.
@@ -419,6 +461,15 @@ func (c *ChainConfig) Description() string {
 		} else {
 			banner += "Consensus: Beacon (proof-of-stake), merged from Clique (proof-of-authority)\n"
 		}
+	case c.CliqueFaster != nil:
+		if c.TerminalTotalDifficulty == nil {
+			banner += "Consensus: Clique Faster (proof-of-authority)\n"
+		} else if !c.TerminalTotalDifficultyPassed {
+			banner += "Consensus: Beacon (proof-of-stake), merging from Clique Faster (proof-of-authority)\n"
+		} else {
+			banner += "Consensus: Beacon (proof-of-stake), merged from Clique Faster (proof-of-authority)\n"
+		}
+
 	default:
 		banner += "Consensus: unknown\n"
 	}

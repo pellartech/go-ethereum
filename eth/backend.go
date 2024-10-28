@@ -31,6 +31,7 @@ import (
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/beacon"
 	"github.com/ethereum/go-ethereum/consensus/clique"
+	"github.com/ethereum/go-ethereum/consensus/cliquefaster"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/bloombits"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -408,6 +409,10 @@ func (s *Ethereum) shouldPreserve(header *types.Header) bool {
 	if _, ok := s.engine.(*clique.Clique); ok {
 		return false
 	}
+	// CliqueFaster:
+	if _, ok := s.engine.(*cliquefaster.CliqueFaster); ok {
+		return false
+	}
 	return s.isLocalBlock(header)
 }
 
@@ -454,6 +459,25 @@ func (s *Ethereum) StartMining() error {
 			}
 			cli.Authorize(eb, wallet.SignData)
 		}
+
+		// CliqueFaster
+		var clif *cliquefaster.CliqueFaster
+		if c, ok := s.engine.(*cliquefaster.CliqueFaster); ok {
+			clif = c
+		} else if cl, ok := s.engine.(*beacon.Beacon); ok {
+			if c, ok := cl.InnerEngine().(*cliquefaster.CliqueFaster); ok {
+				clif = c
+			}
+		}
+		if clif != nil {
+			wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
+			if wallet == nil || err != nil {
+				log.Error("Etherbase account unavailable locally", "err", err)
+				return fmt.Errorf("signer missing: %v", err)
+			}
+			clif.Authorize(eb, wallet.SignData)
+		}
+
 		// If mining is started, we can disable the transaction rejection mechanism
 		// introduced to speed sync times.
 		s.handler.enableSyncedFeatures()

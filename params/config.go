@@ -366,6 +366,9 @@ type ChainConfig struct {
 	// even without having seen the TTD locally (safer long term).
 	TerminalTotalDifficultyPassed bool `json:"terminalTotalDifficultyPassed,omitempty"`
 
+	// ZeroGasTipCap is a flag specifying that the gas tip cap should be zero.
+	ZeroGasTipCap bool `json:"zeroGasTipCap,omitempty"`
+
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
 	Clique *CliqueConfig `json:"clique,omitempty"`

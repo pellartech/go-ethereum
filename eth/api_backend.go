@@ -368,6 +368,9 @@ func (b *EthAPIBackend) SyncProgress() ethereum.SyncProgress {
 }
 
 func (b *EthAPIBackend) SuggestGasTipCap(ctx context.Context) (*big.Int, error) {
+	if b.eth.config.Genesis.Config.ZeroGasTipCap {
+		return big.NewInt(0), nil
+	}
 	return b.gpo.SuggestTipCap(ctx)
 }
 
